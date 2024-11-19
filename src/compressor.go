@@ -9,7 +9,7 @@ import (
 )
 
 
-//funkcja rzyjmuje ścieżkę do pliku wejściowego i ścieżke do pliku zwracanego
+//funkcja przyjmuje ścieżkę do pliku wejściowego i ścieżke do pliku zwracanego
 //przyjmuje formatach PNG i BMP - zapisuje w formacie JPEG
 func CompressImage(inputPath string, outputPath string, quality int) error {
 
@@ -47,11 +47,8 @@ func CompressImage(inputPath string, outputPath string, quality int) error {
 
     //zapisuje obraz w JPEG
     err = jpeg.Encode(outputFile, img, &jpegOptions)
-    if err != nil {
-        return err
-    }
 
-    return nil
+    return err
 }
 
 //funkcja pobiera rozszenie pliku
