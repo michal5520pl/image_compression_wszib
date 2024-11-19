@@ -1,0 +1,4 @@
+github.com/tomcraven/goga v0.0.0-20220413070930-f4ca47f4d421 h1:2p+OpvFXowBZbuuUiz61iD+2RenaCj43iTpiV70h+GU=
+github.com/tomcraven/goga v0.0.0-20220413070930-f4ca47f4d421/go.mod h1:zOcgItqcOPZMUxPK7urZMHI+a80eo3mYHFZzaI9Xoas=
+golang.org/x/image v0.22.0 h1:UtK5yLUzilVrkjMAZAZ34DXGpASN8i8pj8g+O+yd10g=
+golang.org/x/image v0.22.0/go.mod h1:9hPFhljd4zZ1GNSIZJ49sqbp45GKK9t6w+iXvGqZUz4=
