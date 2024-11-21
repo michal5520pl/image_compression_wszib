@@ -54,13 +54,28 @@ func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 	}
 
 	//zapisz najlepszy genom jako obraz JPEG
-	bestGenome := genAlgo.getElite().(*ImageGenome)
+	bestGenome := findBestGenome(&genAlgo)
 	err = saveImageAsJPEG(bestGenome.imageData, outputImagePath)
 	if err != nil {
 		return fmt.Errorf("Error: %w", err)
 	}
 
 	return nil
+}
+
+func findBestGenome(genAlgo *goga.GeneticAlgorithm) *ImageGenome {
+    var bestGenome *ImageGenome
+    bestFitness := math.Inf(-1) // Ustaw na najmniejszą możliwą wartość
+
+    for _, genome := range genAlgo.Population {
+        imgGenome := genome.(*ImageGenome)
+        if imgGenome.fitness > bestFitness {
+            bestFitness = imgGenome.fitness
+            bestGenome = imgGenome
+        }
+    }
+
+    return bestGenome
 }
 
 func (g *ImageGenome) GetFitness() int {
