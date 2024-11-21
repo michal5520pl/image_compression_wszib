@@ -23,6 +23,46 @@ type ImageGenome struct {
 	fitness   float64
 }
 
+func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
+	//wczytywanie obrazu
+	img, err := loadImage(inputImagePath)
+	if err != nil {
+		return fmt.Errorf("failed to load image: %w", err)
+	}
+
+	//nowy genom obrazu
+	genome := NewImageGenome(img)
+
+	//inicjalizacja algorytmu genetycznego
+	genAlgo := goga.NewGeneticAlgorithm()
+	genAlgo.BitsetCreate = &myBitsetCreate{}
+	genAlgo.Simulator = &myImageSimulator{}
+	genAlgo.Mater = goga.NewMater([]goga.MaterFunctionProbability{
+		{P: 0.5, F: goga.OnePointCrossover},
+		{P: 0.5, F: goga.Mutate},
+	})
+	genAlgo.Selector = goga.NewSelector([]goga.SelectorFunctionProbability{
+		{P: 1.0, F: goga.Roulette},
+	})
+
+	//inicjalizacja populacji i potomków
+	genAlgo.Init(populationSize, offspringSize)
+
+	//główna pętla symulacji
+	for i := 0; i < maxIterations; i++ {
+		genAlgo.Simulate()
+	}
+
+	//zapisz najlepszy genom jako obraz JPEG
+	bestGenome := genAlgo.GetBestGenome().(*ImageGenome)
+	err = saveImageAsJPEG(bestGenome.imageData, outputImagePath)
+	if err != nil {
+		return fmt.Errorf("Error: %w", err)
+	}
+
+	return nil
+}
+
 func (g *ImageGenome) GetFitness() int {
 	return int(g.fitness)
 }
