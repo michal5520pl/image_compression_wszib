@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"image"
+	"bytes"
 	"math"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"os"
@@ -26,7 +28,7 @@ type ImageGenome struct {
 
 func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 	//wczytywanie obrazu
-	img, err := loadImage(inputImagePath)
+	_, err := loadImage(inputImagePath)
 	if err != nil {
 		return fmt.Errorf("failed to load image: %w", err)
 	}
@@ -52,7 +54,7 @@ func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 	}
 
 	//zapisz najlepszy genom jako obraz JPEG
-	bestGenome := genAlgo.GetBestGenome().(*ImageGenome)
+	bestGenome := genAlgo.getElite().(*ImageGenome)
 	err = saveImageAsJPEG(bestGenome.imageData, outputImagePath)
 	if err != nil {
 		return fmt.Errorf("Error: %w", err)
@@ -91,13 +93,13 @@ func (g *ImageGenome) GetBits() *goga.Bitset {
 
 			//zapisanie wartości kanałów w bitset
 			//przekształcenie wartości z 16-bitowych na 8-bitowe
-			bitset.Set(index, uint8(r>>8)) // R
+			bitset.Set(index, int(r>>8)) // R
 			index++
-			bitset.Set(index, uint8(g>>8)) // G
+			bitset.Set(index, int(g>>8)) // G
 			index++
-			bitset.Set(index, uint8(b>>8)) // B
+			bitset.Set(index, int(b>>8)) // B
 			index++
-			bitset.Set(index, uint8(a>>8)) // A
+			bitset.Set(index, int(a>>8)) // A
 			index++
 			// błąd????????????????????????
 		}
@@ -241,10 +243,10 @@ func (bc *myBitsetCreate) Go() goga.Bitset {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			//losowanie wartości kanałow (R, G, B, A) zakres (0-255)
-			r := uint8(rand.Intn(256))
-			g := uint8(rand.Intn(256))
-			bValue := uint8(rand.Intn(256))
-			a := uint8(rand.Intn(256))
+			r := int(rand.Intn(256))
+			g := int(rand.Intn(256))
+			bValue := int(rand.Intn(256))
+			a := int(rand.Intn(256))
 
 			//ustawianie wartości w bitsecie
 			b.Set(index, r)   // R
@@ -269,7 +271,7 @@ func (sim *myImageSimulator) OnEndSimulation() {}
 
 func (sim *myImageSimulator) Simulate(g goga.Genome) {
 	imgGenome := g.(*ImageGenome)
-	compressedImg := compressImage(imgGenome)
+	//compressedImg := compressImage(imgGenome)
 	evaluateFitness(imgGenome)
 }
 
