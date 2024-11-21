@@ -21,12 +21,19 @@ func main() {
         fmt.Printf("Bit %d: %d\n", i, bitset.Get(i))
     }
 
-  //==============
-  inputPath := "" //plik wejściowy
+  	//==============
+  	inputPath := "" //plik wejściowy
     outputPath := "" //plik wyjściowy
     quality := 90 //zakres kompresji (1-100)
 
     err := CompressImage(inputPath, outputPath, quality)
+    if err != nil {
+        fmt.Println("Error:", err.Error())
+    } else {
+        fmt.Println("Done UwU")
+    }
+
+	err := RunGeneticAlgorithm(inputPath, outputPath)
     if err != nil {
         fmt.Println("Error:", err.Error())
     } else {
