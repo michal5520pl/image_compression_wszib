@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"image/jpeg"
@@ -29,9 +30,6 @@ func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to load image: %w", err)
 	}
-
-	//nowy genom obrazu
-	genome := NewImageGenome(img)
 
 	//inicjalizacja algorytmu genetycznego
 	genAlgo := goga.NewGeneticAlgorithm()
@@ -101,6 +99,7 @@ func (g *ImageGenome) GetBits() *goga.Bitset {
 			index++
 			bitset.Set(index, uint8(a>>8)) // A
 			index++
+			// błąd????????????????????????
 		}
 	}
 

@@ -22,8 +22,8 @@ func main() {
     }
 
   	//==============
-  	inputPath := "" //plik wejściowy
-    outputPath := "" //plik wyjściowy
+  	inputPath := "Images\\comunismcar.png" //plik wejściowy
+    outputPath := "Images\\comunismcarJPEG.jpg" //plik wyjściowy
     quality := 90 //zakres kompresji (1-100)
 
     err := CompressImage(inputPath, outputPath, quality)
