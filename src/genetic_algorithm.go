@@ -2,6 +2,7 @@ package main
 
 import (
 	"image"
+	"math"
 	"image/jpeg"
 	"image/png"
 	"os"
@@ -70,10 +71,6 @@ func NewImageGenome(img image.Image) *ImageGenome {
 	return &ImageGenome{imageData: img, fitness: 0}
 }
 
-import (
-	"image"
-	"math"
-)
 
 //funkcja do oceny (funkcja fitness)
 func evaluateFitness(genome *ImageGenome) {
@@ -274,5 +271,9 @@ func saveImageAsJPEG(img image.Image, filePath string) error {
 
 //funkcja pomocnicza by uzyskać rozszerzenie pliku
 func getFileExtension(filePath string) string {
-	// kod do uzyskiwania rozszerzenia pliku bedzie trzeba dopisać 
+	// idk czy to będzie działać 
+	if len(filePath) < 4 {
+		return ""
+	}
+	return filePath[len(filePath)-4:]
 }
