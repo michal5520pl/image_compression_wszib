@@ -1,12 +1,39 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
+	"log"
+	"os"
+	"strings"
 
 	"github.com/tomcraven/goga"
 )
 
 func main() {
+	var input []string
+
+	flag.Func("input", "Input file(s) of images. Separate them with ','", func(s string) error {
+		input = strings.Split(s, ",")
+
+		if len(input) == 0 || input == nil {
+			return errors.New("no file was given")
+		}
+
+		for _, value := range input {
+			if _, err := os.Stat(value); errors.Is(err, os.ErrNotExist) {
+				return errors.New(value + " is not existing")
+			} else if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	flag.Parse()
+
 	// jakieś użycie goga
 	bitset := goga.Bitset{}
 	bitset.Create(10)
@@ -23,22 +50,22 @@ func main() {
 	}
 
 	//==============
-	inputPath := "../szambo_jednokomorowe.png"             //plik wejściowy
-	outputPath := "../szambo_jednokomorowe.compressed.jpg" //plik wyjściowy
-	quality := 90                                          //zakres kompresji (1-100)
+	const quality = 90 //zakres kompresji (1-100)
 
-	err := CompressImage(inputPath, outputPath, quality)
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-	} else {
-		fmt.Println("Done UwU")
+	for _, inputFile := range input {
+		index := strings.LastIndex(inputFile, ".")
+
+		if index == -1 {
+			log.Default().Fatal("Filename doesn't contain a correct extension!")
+		}
+
+		err := CompressImage(inputFile, inputFile[:index]+".compressed.jpg", quality)
+
+		if err != nil {
+			log.Default().Fatal(err.Error())
+		}
 	}
 
-	err = RunGeneticAlgorithm(inputPath, outputPath)
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-	} else {
-		fmt.Println("Done UwU")
-	}
+	fmt.Println("Done UwU")
 
 }
