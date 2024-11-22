@@ -29,39 +29,37 @@ type ImageGenome struct {
 }
 
 func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
-    //wczytywanie obrazu
-    _, err := loadImage(inputImagePath)
-    if err != nil {
-        return fmt.Errorf("failed to load image: %w", err)
-    }
+	//wczytywanie obrazu
+	_, err := loadImage(inputImagePath)
+	if err != nil {
+		return fmt.Errorf("failed to load image: %w", err)
+	}
 
-    //inicjalizacja algorytmu genetycznego
-    genAlgo := goga.NewGeneticAlgorithm()
-    genAlgo.BitsetCreate = &myBitsetCreate{}
-    genAlgo.Simulator = &myImageSimulator{}
-    genAlgo.Mater = goga.NewMater([]goga.MaterFunctionProbability{
-        {P: 0.5, F: goga.OnePointCrossover},
-        {P: 0.5, F: goga.Mutate},
-    })
-    genAlgo.Selector = goga.NewSelector([]goga.SelectorFunctionProbability{
-        {P: 1.0, F: goga.Roulette},
-    })
+	//inicjalizacja algorytmu genetycznego
+	genAlgo := goga.NewGeneticAlgorithm()
+	genAlgo.BitsetCreate = &myBitsetCreate{}
+	genAlgo.Simulator = &myImageSimulator{}
+	genAlgo.Mater = goga.NewMater([]goga.MaterFunctionProbability{
+		{P: 0.5, F: goga.OnePointCrossover},
+		{P: 0.5, F: goga.Mutate},
+	})
+	genAlgo.Selector = goga.NewSelector([]goga.SelectorFunctionProbability{
+		{P: 1.0, F: goga.Roulette},
+	})
 
-    //inicjalizacja populacji i potomków
-    genAlgo.Init(populationSize, offspringSize)
+	//inicjalizacja populacji i potomków
+	genAlgo.Init(populationSize, offspringSize)
 
-    //główna pętla symulacji
-    for i := 0; i < maxIterations; i++ {
-        for _, genome := range genAlgo.GetPopulation() {//to chyba powinno pnaprawić problem z funkcją simulate
-            genAlgo.Simulator.Simulate(genome)
-        }
-    }
+	//główna pętla symulacji
+	for i := 0; i < maxIterations; i++ {
+		genAlgo.Simulate()
+	}
 
-    //zapisz najlepszy genom jako obraz JPEG
-    bestGenome := findBestGenome(&genAlgo)
-    err = saveImageAsJPEG(bestGenome.imageData, outputImagePath)
+	//zapisz najlepszy genom jako obraz JPEG
+	bestGenome := findBestGenome(&genAlgo)
+	err = saveImageAsJPEG(bestGenome.imageData, outputImagePath)
 
-    return err
+	return err
 }
 
 func findBestGenome(genAlgo *goga.GeneticAlgorithm) *ImageGenome {
@@ -69,22 +67,22 @@ func findBestGenome(genAlgo *goga.GeneticAlgorithm) *ImageGenome {
 	bestFitness := math.Inf(-1) // Ustaw na najmniejszą możliwą wartość
 
 	for _, genome := range genAlgo.GetPopulation() {
-        imgGenome := genome.(*ImageGenome)
-        if imgGenome.fitness > bestFitness { //tutaj powinno być float64 do porownania
-            bestFitness = imgGenome.fitness
-            bestGenome = imgGenome
-        }
-    }
+		imgGenome := genome.(*ImageGenome)
+		if imgGenome.fitness > bestFitness {
+			bestFitness = imgGenome.fitness
+			bestGenome = imgGenome
+		}
+	}
 
 	return bestGenome
 }
 
-func (g ImageGenome) GetFitness() float64 {
-	return g.fitness
+func (g ImageGenome) GetFitness() int {
+	return int(g.fitness)
 }
 
-func (g ImageGenome) SetFitness(fitness float64) {
-	g.fitness = fitness
+func (g ImageGenome) SetFitness(fitness int) {
+	g.fitness = float64(fitness)
 }
 
 func (g ImageGenome) GetBits() *goga.Bitset {
@@ -117,6 +115,7 @@ func (g ImageGenome) GetBits() *goga.Bitset {
 			index++
 			bitset.Set(index, int(a>>8)) // A
 			index++
+			// błąd????????????????????????
 		}
 	}
 
@@ -136,7 +135,7 @@ func evaluateFitness(genome *ImageGenome) {
 	psnr := calculatePSNR(genome.imageData, compressedImg)
 
 	//ustawienia fitness na wartość PSNR
-	genome.SetFitness(psnr)
+	genome.SetFitness(int(psnr))
 }
 
 // funkcja do obliczania PSNR
@@ -284,18 +283,12 @@ func (sim *myImageSimulator) OnBeginSimulation() {}
 func (sim *myImageSimulator) OnEndSimulation() {}
 
 func (sim *myImageSimulator) Simulate(g goga.Genome) {
-    imgGenome, ok := g.(*ImageGenome)
+	imgGenome := g.(*ImageGenome)
 	// ten kod jest niepoprawny. Najpierw degradujemy obiekt typu ImageGenome do goga.Genome, a potem próbujemy przywrócić go do ImageGenome. Gdyby do funkcji był przekazywany pointer do obiektu, to by się dało, ale nie można zmienić
 	// Pozostaje zmiana kodu, aby imageData (btw. jest nieeksportowany, więc możliwe są dalsze błędy) nie znajdował się w genomie
 	// fitness jest domyślnie w obiekcie tylko jako int, po co zmiana na float64?
-	//odp: fitness jest lepiej użuwac jako float64 i masz rację trzeba to zmienić bo domyślnie w struct jest float64
-    if !ok {
-        log.Println("Errot: g to nie *ImageGenome")
-        return
-    }
-
 	//compressedImg := compressImage(imgGenome)
-    evaluateFitness(imgGenome)
+	evaluateFitness(imgGenome)
 }
 
 func (sim *myImageSimulator) ExitFunc(g goga.Genome) bool {
