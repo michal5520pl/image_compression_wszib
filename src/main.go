@@ -64,6 +64,12 @@ func main() {
 		if err != nil {
 			log.Default().Fatal(err.Error())
 		}
+
+		err = RunGeneticAlgorithm(inputFile, inputFile[:index]+".algorithm.jpg")
+
+		if err != nil {
+			log.Default().Fatal(err.Error())
+		}
 	}
 
 	fmt.Println("Done UwU")

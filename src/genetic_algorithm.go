@@ -17,20 +17,23 @@ import (
 )
 
 const (
-	populationSize = 50  // µ
-	offspringSize  = 100 // λ
-	maxIterations  = 1000
+	populationSize = 2 // µ
+	offspringSize  = 4 // λ
+	maxIterations  = 10
 )
 
-type ImageGenome struct {
-	imageData image.Image
-	fitness   float64
-	//GetBits   func() *goga.Bitset
-}
+var imageData image.Image
+
+// type ImageGenome struct {
+// 	imageData image.Image
+// 	fitness   float64
+// 	//GetBits   func() *goga.Bitset
+// }
 
 func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 	//wczytywanie obrazu
-	_, err := loadImage(inputImagePath)
+	var err error
+	imageData, err = loadImage(inputImagePath)
 	if err != nil {
 		return fmt.Errorf("failed to load image: %w", err)
 	}
@@ -57,82 +60,82 @@ func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 
 	//zapisz najlepszy genom jako obraz JPEG
 	bestGenome := findBestGenome(&genAlgo)
-	err = saveImageAsJPEG(bestGenome.imageData, outputImagePath)
+	err = saveImageAsJPEG(compressImage(bestGenome), outputImagePath)
 
 	return err
 }
 
-func findBestGenome(genAlgo *goga.GeneticAlgorithm) *ImageGenome {
-	var bestGenome *ImageGenome
+func findBestGenome(genAlgo *goga.GeneticAlgorithm) goga.Genome {
+	var bestGenome goga.Genome
 	bestFitness := math.Inf(-1) // Ustaw na najmniejszą możliwą wartość
 
 	for _, genome := range genAlgo.GetPopulation() {
-		imgGenome := genome.(*ImageGenome)
-		if imgGenome.fitness > bestFitness {
-			bestFitness = imgGenome.fitness
-			bestGenome = imgGenome
+		if float64(genome.GetFitness()) > bestFitness {
+			bestFitness = float64(genome.GetFitness())
+			bestGenome = genome
 		}
 	}
 
 	return bestGenome
 }
 
-func (g ImageGenome) GetFitness() int {
-	return int(g.fitness)
-}
+// func (g ImageGenome) GetFitness() int {
+// 	return int(g.fitness)
+// }
 
-func (g ImageGenome) SetFitness(fitness int) {
-	g.fitness = float64(fitness)
-}
+// func (g ImageGenome) SetFitness(fitness int) {
+// 	g.fitness = float64(fitness)
+// }
 
-func (g ImageGenome) GetBits() *goga.Bitset {
-	//rozmiar obrazu
-	bounds := g.imageData.Bounds()
-	width, height := bounds.Max.X, bounds.Max.Y
+// func (g ImageGenome) GetBits() *goga.Bitset {
+// 	//rozmiar obrazu
+// 	bounds := g.imageData.Bounds()
+// 	width, height := bounds.Max.X, bounds.Max.Y
 
-	//oblicza rozmiar bitsetu
-	//piksel ma 4 kanały (R, G, B, A) (32 bity na piksel)
-	bitsetSize := width * height * 32
-	bitset := &goga.Bitset{}
-	bitset.Create(bitsetSize)
+// 	//oblicza rozmiar bitsetu
+// 	//piksel ma 4 kanały (R, G, B, A) (32 bity na piksel)
+// 	bitsetSize := width * height * 32
+// 	bitset := &goga.Bitset{}
+// 	bitset.Create(bitsetSize)
 
-	//indeks do bitsetu
-	index := 0
+// 	//indeks do bitsetu
+// 	index := 0
 
-	//iterowanie przez piksele
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			//uzyskiwanie koloru piksela
-			r, g, b, a := g.imageData.At(x, y).RGBA()
+// 	//iterowanie przez piksele
+// 	for y := 0; y < height; y++ {
+// 		for x := 0; x < width; x++ {
+// 			//uzyskiwanie koloru piksela
+// 			r, g, b, a := g.imageData.At(x, y).RGBA()
 
-			//zapisanie wartości kanałów w bitset
-			//przekształcenie wartości z 16-bitowych na 8-bitowe
-			bitset.Set(index, int(r>>8)) // R
-			index++
-			bitset.Set(index, int(g>>8)) // G
-			index++
-			bitset.Set(index, int(b>>8)) // B
-			index++
-			bitset.Set(index, int(a>>8)) // A
-			index++
-			// błąd????????????????????????
-		}
-	}
+// 			//zapisanie wartości kanałów w bitset
+// 			//przekształcenie wartości z 16-bitowych na 8-bitowe
+// 			bitset.Set(index, int(r>>8)) // R
+// 			index++
+// 			bitset.Set(index, int(g>>8)) // G
+// 			index++
+// 			bitset.Set(index, int(b>>8)) // B
+// 			index++
+// 			bitset.Set(index, int(a>>8)) // A
+// 			index++
+// 			// błąd????????????????????????
+// 		}
+// 	}
 
-	return bitset
-}
+// 	return bitset
+// }
 
-func NewImageGenome(img image.Image) *ImageGenome {
-	return &ImageGenome{imageData: img, fitness: 0}
-}
+// func NewImageGenome(img image.Image) *ImageGenome {
+// 	return &ImageGenome{imageData: img, fitness: 0}
+// }
 
 // funkcja do oceny (funkcja fitness)
-func evaluateFitness(genome *ImageGenome) {
+// func evaluateFitness(genome *ImageGenome) {
+func evaluateFitness(genome goga.Genome) {
 	//kompresja obrazu do formatu JPEG
 	compressedImg := compressImage(genome)
 
 	//oblicza PSNR
-	psnr := calculatePSNR(genome.imageData, compressedImg)
+	psnr := calculatePSNR(imageData, compressedImg)
 
 	//ustawienia fitness na wartość PSNR
 	genome.SetFitness(int(psnr))
@@ -170,9 +173,9 @@ func calculatePSNR(original image.Image, compressed image.Image) float64 {
 }
 
 // funkcja kompresująca obraz
-func compressImage(genome *ImageGenome) image.Image {
+func compressImage(genome goga.Genome) image.Image {
 	//rekonstrukcja obrazu z bitsetu
-	bounds := genome.imageData.Bounds()
+	bounds := imageData.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
 	//tworzenie nowego obrazu
@@ -283,12 +286,11 @@ func (sim *myImageSimulator) OnBeginSimulation() {}
 func (sim *myImageSimulator) OnEndSimulation() {}
 
 func (sim *myImageSimulator) Simulate(g goga.Genome) {
-	imgGenome := g.(*ImageGenome)
 	// ten kod jest niepoprawny. Najpierw degradujemy obiekt typu ImageGenome do goga.Genome, a potem próbujemy przywrócić go do ImageGenome. Gdyby do funkcji był przekazywany pointer do obiektu, to by się dało, ale nie można zmienić
 	// Pozostaje zmiana kodu, aby imageData (btw. jest nieeksportowany, więc możliwe są dalsze błędy) nie znajdował się w genomie
 	// fitness jest domyślnie w obiekcie tylko jako int, po co zmiana na float64?
 	//compressedImg := compressImage(imgGenome)
-	evaluateFitness(imgGenome)
+	evaluateFitness(g)
 }
 
 func (sim *myImageSimulator) ExitFunc(g goga.Genome) bool {
