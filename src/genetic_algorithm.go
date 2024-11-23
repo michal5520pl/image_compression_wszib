@@ -18,8 +18,8 @@ import (
 
 const (
 	populationSize = 2 // µ
-	offspringSize  = 4 // λ
-	maxIterations  = 10
+	offspringSize  = 2 // λ
+	maxIterations  = 2
 )
 
 var imageData image.Image
@@ -87,42 +87,6 @@ func findBestGenome(genAlgo *goga.GeneticAlgorithm) goga.Genome {
 // 	g.fitness = float64(fitness)
 // }
 
-// func (g ImageGenome) GetBits() *goga.Bitset {
-// 	//rozmiar obrazu
-// 	bounds := g.imageData.Bounds()
-// 	width, height := bounds.Max.X, bounds.Max.Y
-
-// 	//oblicza rozmiar bitsetu
-// 	//piksel ma 4 kanały (R, G, B, A) (32 bity na piksel)
-// 	bitsetSize := width * height * 32
-// 	bitset := &goga.Bitset{}
-// 	bitset.Create(bitsetSize)
-
-// 	//indeks do bitsetu
-// 	index := 0
-
-// 	//iterowanie przez piksele
-// 	for y := 0; y < height; y++ {
-// 		for x := 0; x < width; x++ {
-// 			//uzyskiwanie koloru piksela
-// 			r, g, b, a := g.imageData.At(x, y).RGBA()
-
-// 			//zapisanie wartości kanałów w bitset
-// 			//przekształcenie wartości z 16-bitowych na 8-bitowe
-// 			bitset.Set(index, int(r>>8)) // R
-// 			index++
-// 			bitset.Set(index, int(g>>8)) // G
-// 			index++
-// 			bitset.Set(index, int(b>>8)) // B
-// 			index++
-// 			bitset.Set(index, int(a>>8)) // A
-// 			index++
-// 			// błąd????????????????????????
-// 		}
-// 	}
-
-// 	return bitset
-// }
 
 // func NewImageGenome(img image.Image) *ImageGenome {
 // 	return &ImageGenome{imageData: img, fitness: 0}
@@ -174,27 +138,46 @@ func calculatePSNR(original image.Image, compressed image.Image) float64 {
 
 // funkcja kompresująca obraz
 func compressImage(genome goga.Genome) image.Image {
-	//rekonstrukcja obrazu z bitsetu
+	//tworzenie bitsetu z obrazka
 	bounds := imageData.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
-	//tworzenie nowego obrazu
+	bitset := &goga.Bitset{}
+	bitset.Create(width * height * 32)
+
+	index := 0
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			r, g, b, a := imageData.At(x, y).RGBA()
+
+			bitset.Set(index, int(r>>8))
+			index++
+			bitset.Set(index, int(g>>8))
+			index++
+			bitset.Set(index, int(b>>8))
+			index++
+			bitset.Set(index, int(a>>8))
+			index++
+		}
+	}
+
+	//rekonstrukcja obrazu z bitsetu
 	newImage := image.NewRGBA(bounds)
 
 	//indeks do bitsetu
-	index := 0
+	index = 0
 
 	//iteracja przez każdy piksel
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			//odczytywanie wartosci kanałow z bitset
-			r := genome.GetBits().Get(index) // R
+			//odczytywanie wartości kanałów z bitsetu
+			r := bitset.Get(index) // R
 			index++
-			g := genome.GetBits().Get(index) // G
+			g := bitset.Get(index) // G
 			index++
-			bValue := genome.GetBits().Get(index) // B
+			bValue := bitset.Get(index) // B
 			index++
-			a := genome.GetBits().Get(index) // A
+			a := bitset.Get(index) // A
 			index++
 
 			//ustawianie koloru pikseli w nowym obrazie
@@ -211,34 +194,12 @@ func compressImage(genome goga.Genome) image.Image {
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, newImage, nil)
 	if err != nil {
-		//idk czy nie rozbudować bardziej obsługi błedów
 		panic(err)
 	}
 
-	//zwraca skompresowany obraz
-	//mozna zwrócić nowy obraz JPEG jako .Image bo tutaj zwracamy nowy obraz w formacie RGBA
+	//zwraca nowy obraz
 	return newImage
 }
-
-// func geneticAlgorithm() {
-// 	genAlgo := goga.NewGeneticAlgorithm()
-
-// 	genAlgo.BitsetCreate = &myBitsetCreate{}
-// 	genAlgo.Simulator = &myImageSimulator{}
-// 	genAlgo.Mater = goga.NewMater([]goga.MaterFunctionProbability{
-// 		{P: 0.5, F: goga.OnePointCrossover},
-// 		{P: 0.5, F: goga.Mutate},
-// 	})
-// 	genAlgo.Selector = goga.NewSelector([]goga.SelectorFunctionProbability{
-// 		{P: 1.0, F: goga.Roulette},
-// 	})
-
-// 	genAlgo.Init(populationSize, offspringSize)
-
-// 	for i := 0; i < maxIterations; i++ {
-// 		genAlgo.Simulate()
-// 	}
-// }
 
 type myBitsetCreate struct{}
 
