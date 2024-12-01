@@ -7,9 +7,11 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"log"
 	"math"
 	"math/rand"
 	"os"
+	"runtime"
 
 	"github.com/tomcraven/goga"
 
@@ -37,6 +39,8 @@ func RunGeneticAlgorithm(inputImagePath string, outputImagePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to load image: %w", err)
 	}
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//inicjalizacja algorytmu genetycznego
 	genAlgo := goga.NewGeneticAlgorithm()
@@ -86,7 +90,6 @@ func findBestGenome(genAlgo *goga.GeneticAlgorithm) goga.Genome {
 // func (g ImageGenome) SetFitness(fitness int) {
 // 	g.fitness = float64(fitness)
 // }
-
 
 // func NewImageGenome(img image.Image) *ImageGenome {
 // 	return &ImageGenome{imageData: img, fitness: 0}
@@ -142,30 +145,38 @@ func compressImage(genome goga.Genome) image.Image {
 	bounds := imageData.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
-	bitset := &goga.Bitset{}
-	bitset.Create(width * height * 32)
+	var bitset *goga.Bitset
 
-	index := 0
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			r, g, b, a := imageData.At(x, y).RGBA()
+	if genome.GetBits().GetSize() == 0 {
+		bitset = &goga.Bitset{}
+		bitset.Create(width * height * 32)
 
-			bitset.Set(index, int(r>>8))
-			index++
-			bitset.Set(index, int(g>>8))
-			index++
-			bitset.Set(index, int(b>>8))
-			index++
-			bitset.Set(index, int(a>>8))
-			index++
+		index := 0
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				r, g, b, a := imageData.At(x, y).RGBA()
+
+				bitset.Set(index, int(r>>8))
+				index++
+				bitset.Set(index, int(g>>8))
+				index++
+				bitset.Set(index, int(b>>8))
+				index++
+				bitset.Set(index, int(a>>8))
+				index++
+
+				log.Default().Printf("Loading x %d, y %d", x, y)
+			}
 		}
+	} else {
+		bitset = genome.GetBits()
 	}
 
 	//rekonstrukcja obrazu z bitsetu
 	newImage := image.NewRGBA(bounds)
 
 	//indeks do bitsetu
-	index = 0
+	index := 0
 
 	//iteracja przez każdy piksel
 	for y := 0; y < height; y++ {
@@ -187,6 +198,8 @@ func compressImage(genome goga.Genome) image.Image {
 				B: uint8(bValue),
 				A: uint8(a),
 			})
+
+			log.Default().Printf("Set pixels at x %d, y %d", x, y)
 		}
 	}
 
@@ -240,11 +253,15 @@ func (bc *myBitsetCreate) Go() goga.Bitset {
 	return b
 }
 
-type myImageSimulator struct{}
+type myImageSimulator struct {
+	totalIterations int
+}
 
 func (sim *myImageSimulator) OnBeginSimulation() {}
 
-func (sim *myImageSimulator) OnEndSimulation() {}
+func (sim *myImageSimulator) OnEndSimulation() {
+	sim.totalIterations++
+}
 
 func (sim *myImageSimulator) Simulate(g goga.Genome) {
 	// ten kod jest niepoprawny. Najpierw degradujemy obiekt typu ImageGenome do goga.Genome, a potem próbujemy przywrócić go do ImageGenome. Gdyby do funkcji był przekazywany pointer do obiektu, to by się dało, ale nie można zmienić
@@ -255,7 +272,7 @@ func (sim *myImageSimulator) Simulate(g goga.Genome) {
 }
 
 func (sim *myImageSimulator) ExitFunc(g goga.Genome) bool {
-	return false
+	return sim.totalIterations >= maxIterations
 }
 
 // funkcja do wczytywania obrazu z pliku
