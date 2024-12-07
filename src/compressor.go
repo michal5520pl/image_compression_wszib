@@ -52,10 +52,10 @@ func CompressImage(inputPath string, outputPath string, quality int) error {
 	return err
 }
 
-// funkcja pobiera rozszenie pliku
-func getFileExtension(filename string) string {
-	if len(filename) < 4 {
-		return ""
-	}
-	return filename[len(filename)-4:]
-}
+// // funkcja pobiera rozszenie pliku
+// func getFileExtension(filename string) string {
+// 	if len(filename) < 4 {
+// 		return ""
+// 	}
+// 	return filename[len(filename)-4:]
+// }
