@@ -264,10 +264,6 @@ func (sim *myImageSimulator) OnEndSimulation() {
 }
 
 func (sim *myImageSimulator) Simulate(g goga.Genome) {
-	// ten kod jest niepoprawny. Najpierw degradujemy obiekt typu ImageGenome do goga.Genome, a potem próbujemy przywrócić go do ImageGenome. Gdyby do funkcji był przekazywany pointer do obiektu, to by się dało, ale nie można zmienić
-	// Pozostaje zmiana kodu, aby imageData (btw. jest nieeksportowany, więc możliwe są dalsze błędy) nie znajdował się w genomie
-	// fitness jest domyślnie w obiekcie tylko jako int, po co zmiana na float64?
-	//compressedImg := compressImage(imgGenome)
 	evaluateFitness(g)
 }
 
